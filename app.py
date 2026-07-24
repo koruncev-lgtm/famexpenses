@@ -119,17 +119,17 @@ with tab_stats:
 
         # последние записи
         st.subheader("Последние траты")
-        def color_category(val):
-    # красим ячейку категории в её цвет
-    return f"background-color: {COLOR_MAP.get(val, '')}; color: black"
+def color_category(val):
+            # красим ячейку категории в её цвет
+            return f"background-color: {COLOR_MAP.get(val, '')}; color: black"
 
-    st.dataframe(
-    dfm.sort_values("дата", ascending=False)
-       .drop(columns="месяц")
-       .head(20)
-       .style.map(color_category, subset=["категория"]),
-    use_container_width=True, hide_index=True,
-)
+        st.dataframe(
+            dfm.sort_values("дата", ascending=False)
+               .drop(columns="месяц")
+               .head(20)
+               .style.map(color_category, subset=["категория"]),
+            use_container_width=True, hide_index=True,
+        )
 
 # ================= ВКЛАДКА: РЕДАКТИРОВАТЬ =================
 with tab_edit:
