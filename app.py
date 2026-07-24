@@ -89,9 +89,11 @@ with tab_stats:
     else:
         # фильтр по периоду (две даты: начало и конец)
         min_d, max_d = df["дата"].min(), df["дата"].max()
+        # по умолчанию — текущий месяц, но не раньше самой первой траты
+        start_default = max(min_d, max_d.replace(day=1))
         period = st.date_input(
             "Период",
-            value=(max_d.replace(day=1), max_d),  # по умолчанию — текущий месяц
+            value=(start_default, max_d),
             min_value=min_d, max_value=max_d,
         )
         if len(period) == 2:
