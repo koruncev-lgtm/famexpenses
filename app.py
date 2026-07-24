@@ -10,6 +10,9 @@ CATEGORIES = [
     "Продукты", "Кафе и рестораны", "Транспорт", "Жильё и коммуналка",
     "Здоровье", "Одежда", "Развлечения", "Подарки", "Прочее", "Собаки", "Кредиты", "Для дома", "Косметика"
 ]
+# каждой категории — свой постоянный цвет (берутся из палитры по порядку)
+PALETTE = px.colors.qualitative.Set2 + px.colors.qualitative.Pastel
+COLOR_MAP = {cat: PALETTE[i % len(PALETTE)] for i, cat in enumerate(CATEGORIES)}
 CURRENCY = "руб"  # поменяй на "₽", если нужно
 WORKSHEET = "траты"  # название листа в гугл-таблице
 COLUMNS = ["дата", "кто", "категория", "сумма", "комментарий"]
@@ -48,7 +51,7 @@ def load_data():
 
 st.title("💸 Куда пропадают деньги")
 
-tab_add, tab_stats = st.tabs(["➕ Внести", "📊 Аналитика"])
+tab_add, tab_stats, tab_edit = st.tabs(["➕ Внести", "📊 Аналитика", "✏️ Редактировать"])
 
 # ================= ВКЛАДКА: ВНЕСТИ ТРАТУ =================
 with tab_add:
@@ -101,10 +104,12 @@ with tab_stats:
         # расходы по категориям
         by_cat = dfm.groupby("категория", as_index=False)["сумма"].sum()
         fig_cat = px.bar(
-            by_cat.sort_values("сумма"),
-            x="сумма", y="категория", orientation="h",
-            title="По категориям",
+        by_cat.sort_values("сумма"),
+        x="сумма", y="категория", orientation="h",
+        color="категория", color_discrete_map=COLOR_MAP,
+        title="По категориям",
         )
+fig_cat.update_layout(showlegend=False)  # легенда не нужна, названия и так слева
         st.plotly_chart(fig_cat, use_container_width=True)
 
         # динамика по дням
@@ -115,9 +120,40 @@ with tab_stats:
 
         # последние записи
         st.subheader("Последние траты")
-        st.dataframe(
-            dfm.sort_values("дата", ascending=False)
-               .drop(columns="месяц")
-               .head(20),
-            use_container_width=True, hide_index=True,
+        def color_category(val):
+    # красим ячейку категории в её цвет
+    return f"background-color: {COLOR_MAP.get(val, '')}; color: black"
+
+    st.dataframe(
+    dfm.sort_values("дата", ascending=False)
+       .drop(columns="месяц")
+       .head(20)
+       .style.map(color_category, subset=["категория"]),
+    use_container_width=True, hide_index=True,
+)
+
+# ================= ВКЛАДКА: РЕДАКТИРОВАТЬ =================
+with tab_edit:
+    df_edit = load_data()
+    if df_edit.empty:
+        st.info("Пока нечего редактировать")
+    else:
+        st.caption("Меняй ячейки прямо в таблице. Удалить трату: выдели строку галочкой слева и нажми Delete. Изменения применятся после кнопки «Сохранить».")
+        edited = st.data_editor(
+            df_edit,
+            num_rows="dynamic",  # разрешает удалять и добавлять строки
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "дата": st.column_config.DateColumn("дата"),
+                "кто": st.column_config.SelectboxColumn("кто", options=USERS),
+                "категория": st.column_config.SelectboxColumn("категория", options=CATEGORIES),
+                "сумма": st.column_config.NumberColumn("сумма", min_value=0.0),
+                "комментарий": st.column_config.TextColumn("комментарий"),
+            },
         )
+        if st.button("💾 Сохранить изменения", use_container_width=True):
+            out = edited.copy()
+            out["дата"] = out["дата"].astype(str)  # даты обратно в текст для таблицы
+            conn.update(worksheet=WORKSHEET, data=out.astype(str))
+            st.success("Сохранено! Обнови вкладку аналитики.")
