@@ -103,12 +103,12 @@ with tab_stats:
 
         # расходы по категориям
         by_cat = dfm.groupby("категория", as_index=False)["сумма"].sum()
-        fig_cat = px.bar(
-        by_cat.sort_values("сумма"),
-        x="сумма", y="категория", orientation="h",
-        color="категория", color_discrete_map=COLOR_MAP,
-        title="По категориям",
-        )
+fig_cat = px.bar(
+    by_cat.sort_values("сумма"),
+    x="сумма", y="категория", orientation="h",
+    color="категория", color_discrete_map=COLOR_MAP,
+    title="По категориям",
+)
 fig_cat.update_layout(showlegend=False)  # легенда не нужна, названия и так слева
         st.plotly_chart(fig_cat, use_container_width=True)
 
