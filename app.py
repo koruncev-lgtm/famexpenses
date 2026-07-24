@@ -101,7 +101,7 @@ with tab_stats:
             u_sum = dfm.loc[dfm["кто"] == u, "сумма"].sum()
             col.metric(u, f"{u_sum:,.0f} {CURRENCY}")
 
-# расходы по категориям
+        # расходы по категориям
         by_cat = dfm.groupby("категория", as_index=False)["сумма"].sum()
         fig_cat = px.bar(
             by_cat.sort_values("сумма"),
@@ -119,7 +119,7 @@ with tab_stats:
 
         # последние записи
         st.subheader("Последние траты")
-def color_category(val):
+        def color_category(val):
             # красим ячейку категории в её цвет
             return f"background-color: {COLOR_MAP.get(val, '')}; color: black"
 
