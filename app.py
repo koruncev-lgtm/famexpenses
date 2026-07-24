@@ -20,20 +20,6 @@ COLUMNS = ["дата", "кто", "категория", "сумма", "комме
 
 st.set_page_config(page_title="Семейные расходы", page_icon="💸")
 
-# --- простая защита паролем, чтобы чужие не заходили ---
-if "auth" not in st.session_state:
-    st.session_state.auth = False
-
-if not st.session_state.auth:
-    pwd = st.text_input("Пароль", type="password")
-    if pwd:
-        if pwd == st.secrets["app_password"]:
-            st.session_state.auth = True
-            st.rerun()
-        else:
-            st.error("Неверный пароль")
-    st.stop()
-
 # --- подключение к гугл-таблице ---
 conn = st.connection("gsheets", type=GSheetsConnection)
 
