@@ -87,16 +87,23 @@ with tab_stats:
     if df.empty:
         st.info("Пока нет ни одной траты — внеси первую на соседней вкладке")
     else:
-        # фильтр по месяцу
-        df["месяц"] = pd.to_datetime(df["дата"]).dt.strftime("%Y-%m")
-        months = sorted(df["месяц"].unique(), reverse=True)
-        month = st.selectbox("Месяц", months)
-        dfm = df[df["месяц"] == month]
+        # фильтр по периоду (две даты: начало и конец)
+        min_d, max_d = df["дата"].min(), df["дата"].max()
+        period = st.date_input(
+            "Период",
+            value=(max_d.replace(day=1), max_d),  # по умолчанию — текущий месяц
+            min_value=min_d, max_value=max_d,
+        )
+        if len(period) == 2:
+            start, end = period
+        else:
+            start = end = period[0]  # пока выбрана только первая дата
+        dfm = df[(df["дата"] >= start) & (df["дата"] <= end)]
 
         # ключевые цифры
         total = dfm["сумма"].sum()
         col1, col2, col3 = st.columns(3)
-        col1.metric("Всего за месяц", f"{total:,.0f} {CURRENCY}")
+        col1.metric("Всего за период", f"{total:,.0f} {CURRENCY}")
         for col, u in zip([col2, col3], USERS):
             u_sum = dfm.loc[dfm["кто"] == u, "сумма"].sum()
             col.metric(u, f"{u_sum:,.0f} {CURRENCY}")
@@ -125,7 +132,6 @@ with tab_stats:
 
         st.dataframe(
             dfm.sort_values("дата", ascending=False)
-               .drop(columns="месяц")
                .head(20)
                .style.map(color_category, subset=["категория"]),
             use_container_width=True, hide_index=True,
@@ -135,7 +141,7 @@ with tab_stats:
         st.subheader("Разбор категории")
         sel_cat = st.selectbox("Выбери категорию", sorted(dfm["категория"].unique()))
         dfc = dfm[dfm["категория"] == sel_cat]
-        st.metric(f"Итого за месяц: {sel_cat}", f"{dfc['сумма'].sum():,.0f} {CURRENCY}")
+        st.metric(f"Итого за период: {sel_cat}", f"{dfc['сумма'].sum():,.0f} {CURRENCY}")
         st.dataframe(
             dfc.sort_values("дата", ascending=False)[["дата", "кто", "сумма", "комментарий"]],
             use_container_width=True, hide_index=True,
