@@ -131,6 +131,16 @@ with tab_stats:
             use_container_width=True, hide_index=True,
         )
 
+        # разбор одной категории: все траты по ней с комментариями
+        st.subheader("Разбор категории")
+        sel_cat = st.selectbox("Выбери категорию", sorted(dfm["категория"].unique()))
+        dfc = dfm[dfm["категория"] == sel_cat]
+        st.metric(f"Итого за месяц: {sel_cat}", f"{dfc['сумма'].sum():,.0f} {CURRENCY}")
+        st.dataframe(
+            dfc.sort_values("дата", ascending=False)[["дата", "кто", "сумма", "комментарий"]],
+            use_container_width=True, hide_index=True,
+        )
+
 # ================= ВКЛАДКА: РЕДАКТИРОВАТЬ =================
 with tab_edit:
     df_edit = load_data()
